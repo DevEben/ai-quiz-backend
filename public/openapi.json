@@ -1,0 +1,244 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AI Quiz Backend API",
+    "version": "1.0.0",
+    "description": "This is the API for the AI Quiz application. It handles user authentication, question generation, quiz attempts, and progress tracking."
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Provides a simple health check for the API.",
+        "tags": ["General"],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {"type": "boolean", "example": true},
+                    "message": {"type": "string", "example": "Health Check Successful!"},
+                    "ts": {"type": "number", "example": 1678886400000}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth": {
+      "post": {
+        "summary": "User Authentication",
+        "description": "Handles user registration and login.",
+        "tags": ["User"],
+        "requestBody": {
+          "description": "Provide either `register` or `login` action with required fields.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {"type": "string", "enum": ["register"]},
+                      "email": {"type": "string", "format": "email"},
+                      "password": {"type": "string", "minLength": 6},
+                      "name": {"type": "string"}
+                    },
+                    "required": ["action", "email", "password"]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {"type": "string", "enum": ["login"]},
+                      "email": {"type": "string", "format": "email"},
+                      "password": {"type": "string", "minLength": 6}
+                    },
+                    "required": ["action", "email", "password"]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {"type": "string"},
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "string"},
+                        "email": {"type": "string"},
+                        "name": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {"type": "string"},
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {"type": "string"},
+                        "email": {"type": "string"},
+                        "name": {"type": "string"}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Invalid input or unknown action"},
+          "401": {"description": "Invalid credentials"},
+          "409": {"description": "User already exists"}
+        }
+      }
+    },
+    "/api/questions": {
+      "post": {
+        "summary": "Generate Questions",
+        "description": "Generates a list of quiz questions using an AI model.",
+        "tags": ["Quiz"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subject": {"type": "string"},
+                  "examType": {"type": "string"},
+                  "numberOfQuestions": {"type": "integer", "minimum": 1, "maximum": 100}
+                },
+                "required": ["subject", "examType", "numberOfQuestions"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Successfully generated questions"},
+          "400": {"description": "Invalid input"},
+          "401": {"description": "Unauthorized"},
+          "429": {"description": "Rate limit exceeded"},
+          "502": {"description": "AI gateway error"}
+        }
+      }
+    },
+    "/api/attempts": {
+      "post": {
+        "summary": "Submit a Quiz Attempt",
+        "description": "Saves the results of a user's quiz attempt.",
+        "tags": ["Quiz"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "examType": {"type": "string"},
+                  "subject": {"type": "string"},
+                  "totalQuestions": {"type": "integer"},
+                  "correctAnswers": {"type": "integer"},
+                  "scorePercent": {"type": "number"},
+                  "answers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "questionId": {"type": "string"},
+                        "selected": {"type": "integer"},
+                        "correct": {"type": "integer"}
+                      }
+                    }
+                  },
+                  "userName": {"type": "string"},
+                  "userEmail": {"type": "string", "format": "email"}
+                },
+                "required": ["examType", "subject", "totalQuestions", "correctAnswers", "scorePercent"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Attempt saved successfully"},
+          "400": {"description": "Invalid input"},
+          "401": {"description": "Unauthorized"},
+          "500": {"description": "Failed to save attempt"}
+        }
+      }
+    },
+    "/api/progress": {
+      "get": {
+        "summary": "Get User Progress",
+        "description": "Retrieves aggregated progress statistics for the authenticated user.",
+        "tags": ["User"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {"description": "Successfully fetched progress"},
+          "401": {"description": "Unauthorized"},
+          "500": {"description": "Failed to fetch progress"}
+        }
+      }
+    },
+    "/api/leaderboard": {
+      "get": {
+        "summary": "Get Leaderboard",
+        "description": "Retrieves the leaderboard, optionally filtered by subject.",
+        "tags": ["General"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "Filter leaderboard by subject",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit the number of results",
+            "schema": {"type": "integer", "default": 50}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully fetched leaderboard"},
+          "401": {"description": "Unauthorized"},
+          "500": {"description": "Failed to fetch leaderboard"}
+        }
+      }
+    }
+  }
+}
