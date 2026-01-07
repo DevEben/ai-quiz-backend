@@ -4,6 +4,9 @@ import { z } from "zod";
 import { getCollection } from "@/lib/db";
 import { issueToken } from "@/lib/auth";
 
+const buildDefaultAvatar = (seed: string) =>
+  `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed || "User")}&backgroundColor=cdd6f4,e8e8e8&fontSize=36`;
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -34,16 +37,18 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const avatarUrl = buildDefaultAvatar(name || email);
     const user = {
       email,
       passwordHash,
       name,
+      avatarUrl,
       createdAt: new Date(),
     };
 
     const result = await users.insertOne(user);
     const token = issueToken(result.insertedId.toString());
-    return NextResponse.json({ token, user: { id: result.insertedId, email, name } }, { status: 201 });
+    return NextResponse.json({ token, user: { id: result.insertedId, email, name, avatarUrl } }, { status: 201 });
   }
 
   if (action === "login") {
@@ -64,8 +69,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
+    const avatarUrl = (user as any).avatarUrl ?? buildDefaultAvatar((user as any).name || (user as any).email);
+    if (!(user as any).avatarUrl) {
+      await users.updateOne({ _id: (user as any)._id }, { $set: { avatarUrl } });
+    }
+
     const token = issueToken((user as any)._id.toString());
-    return NextResponse.json({ token, user: { id: (user as any)._id, email: user.email, name: user.name } });
+    return NextResponse.json({
+      token,
+      user: { id: (user as any)._id, email: user.email, name: user.name, avatarUrl },
+    });
   }
 
   return NextResponse.json({ error: "Unknown action. Use 'register' or 'login'" }, { status: 400 });

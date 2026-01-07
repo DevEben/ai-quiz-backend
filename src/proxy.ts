@@ -22,7 +22,7 @@ function buildCorsHeaders(req: NextRequest) {
   };
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   // Apply CORS to API routes so the frontend can call the backend from a different origin.
   if (!req.nextUrl.pathname.startsWith("/api")) {
     return NextResponse.next();
