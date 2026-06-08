@@ -369,6 +369,67 @@
           "413": { "description": "File too large" }
         }
       }
+    },
+    "/api/admin/upload-past-questions": {
+      "post": {
+        "summary": "Upload Past Questions",
+        "description": "Allows admin users to upload past questions in PDF format.",
+        "tags": ["Admin"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The PDF file containing past questions."
+                  },
+                  "exam": {
+                    "type": "string",
+                    "enum": ["JAMB", "WAEC"],
+                    "description": "The exam type."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The subject of the questions."
+                  },
+                  "year": {
+                    "type": "integer",
+                    "description": "The year of the exam."
+                  }
+                },
+                "required": ["file", "exam", "subject", "year"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PDF processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "extracted": {"type": "integer"},
+                    "inserted": {"type": "integer"},
+                    "duplicates": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Invalid input or missing fields"},
+          "401": {"description": "Unauthorized"},
+          "422": {"description": "No questions detected in PDF"},
+          "500": {"description": "Failed to process PDF"}
+        }
+      }
     }
   }
 }

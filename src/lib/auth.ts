@@ -8,9 +8,9 @@ function getSecret(): string {
   return secret;
 }
 
-export function issueToken(userId: string) {
+export function issueToken(userId: string, role: "user" | "admin" = "user"): string {
   const secret = getSecret();
-  const token = jwt.sign({ sub: userId }, secret, {
+  const token = jwt.sign({ sub: userId, role }, secret, {
     expiresIn: "30d",
     algorithm: "HS256",
   });
@@ -30,7 +30,7 @@ export function verifyAuth(authHeader?: string) {
     const userId = payload.sub as string | undefined;
     if (!userId) return null;
 
-    return { userId, payload };
+    return { userId, payload, role: payload.role as "user" | "admin" | undefined };
   } catch (error) {
     console.error("JWT verification error:", error);
     return null;

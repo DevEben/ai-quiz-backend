@@ -9,10 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.95",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^6.9.0",
+    "mongoose": "^9.1.2",
     "next": "16.0.7",
+    "nodemailer": "^6.10.1",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "zod": "^3.25.8"
