@@ -53,8 +53,10 @@ function getNodemailer() {
     return runtimeRequire("nodemailer") as {
       createTransport: (config: Record<string, unknown>) => any;
     };
-  } catch {
-    throw new Error("Nodemailer is not installed. Run npm install in the backend project.");
+  } catch (error: any) {
+    log.error("Nodemailer load error:", error);
+
+    throw error;
   }
 }
 
