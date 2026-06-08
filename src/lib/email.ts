@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import { logger } from "@/lib/logger";
 
 type SendEmailPayload = {
@@ -47,19 +48,6 @@ function getSmtpConfig() {
   };
 }
 
-function getNodemailer() {
-  try {
-    const runtimeRequire = eval("require") as (moduleName: string) => any;
-    return runtimeRequire("nodemailer") as {
-      createTransport: (config: Record<string, unknown>) => any;
-    };
-  } catch (error: any) {
-    log.error("Nodemailer load error:", error);
-
-    throw error;
-  }
-}
-
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -100,7 +88,6 @@ export async function verifyEmailTransporter() {
     throw new Error(`Missing SMTP configuration: ${config.missing.join(", ")}`);
   }
 
-  const nodemailer = getNodemailer();
   const transporter = nodemailer.createTransport({
     host: config.host,
     port: config.port,
@@ -148,4 +135,3 @@ export async function sendEmail(payload: SendEmailPayload) {
     response: info.response,
   });
 }
-
